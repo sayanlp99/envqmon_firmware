@@ -1,6 +1,5 @@
-author: mongoose-os
+author: Sayan Chakraborty
 description: A JS-enabled demo Mongoose OS firmware
-# arch: PLATFORM
 version: 1.0
 manifest_version: 2017-05-18
 libs_version: ${mos.version}
@@ -8,8 +7,15 @@ modules_version: ${mos.version}
 mongoose_os_version: ${mos.version}
 
 config_schema:
-  - ["mqtt.server", "mqtt.eclipseprojects.io:1883"]
+  - ["device.id", "AIRQMON-??????"]
+  - ["bt.enable", true]
+  - ["bt.config_enable", true]
+  - ["bt.dev_name", "AIRQMON-??????"]
+  - ["wifi.ap.ssid", "AIRQMON-??????"]
+  - ["wifi.ap.pass", "P39L8WTe5rBxHRRq9jYT4UCqX"]
   - ["i2c.enable", true]
+  - ["mqtt.enable", true]
+  - ["mqtt.server", "broker.emqx.io:1883"]
 
 tags:
   - js
@@ -20,6 +26,8 @@ filesystem:
 libs:
   - location: https://github.com/mongoose-os-libs/boards
   - location: https://github.com/mongoose-os-libs/js-demo-bundle
+  - location: https://github.com/mongoose-os-libs/mqtt
+  - location: https://github.com/mongoose-os-libs/bt-service-config
 
 conds:
   - when: mos.platform == "esp32"
