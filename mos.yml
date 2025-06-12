@@ -7,15 +7,23 @@ modules_version: ${mos.version}
 mongoose_os_version: ${mos.version}
 
 config_schema:
-  - ["device.id", "AIRQMON-??????"]
+  - ["device.id", "ENVQMON-??????"]
   - ["bt.enable", true]
   - ["bt.config_enable", true]
-  - ["bt.dev_name", "AIRQMON-??????"]
-  - ["wifi.ap.ssid", "AIRQMON-??????"]
+  - ["bt.dev_name", "ENVQMON-??????"]
+  - ["wifi.ap.ssid", "ENVQMON-??????"]
   - ["wifi.ap.pass", "P39L8WTe5rBxHRRq9jYT4UCqX"]
+  - ["wifi.sta.ssid",  "ENVQMON-HQ"]
+  - ["wifi.sta.pass", "12345678"]
+  - ["wifi.sta.enable", true]
   - ["i2c.enable", true]
   - ["mqtt.enable", true]
-  - ["mqtt.server", "broker.emqx.io:1883"]
+  - ["mqtt.client_id", "ENVQMON-??????"]
+  - ["mqtt.user", "envqmon"]
+  - ["mqtt.pass", "envqmon"]
+  - ["mqtt.server", "vd9358ed.ala.asia-southeast1.emqxsl.com:8883"]
+  - ["mqtt.ssl_enable", true]
+  - ["mqtt.ssl_ca_cert", "emqxsl-ca.crt"]
 
 tags:
   - js
