@@ -18,12 +18,14 @@ config_schema:
   - ["wifi.sta.enable", true]
   - ["i2c.enable", true]
   - ["mqtt.enable", true]
-  - ["mqtt.client_id", "ENVQMON-??????"]
-  - ["mqtt.user", "envqmon"]
-  - ["mqtt.pass", "envqmon"]
-  - ["mqtt.server", "vd9358ed.ala.asia-southeast1.emqxsl.com:8883"]
-  - ["mqtt.ssl_enable", true]
-  - ["mqtt.ssl_ca_cert", "emqxsl-ca.crt"]
+  - ["mqtt.server", "broker.emqx.io:1883"]
+  # - ["mqtt.enable", true]
+  # - ["mqtt.client_id", "ENVQMON-??????"]
+  # - ["mqtt.user", "envqmon"]
+  # - ["mqtt.pass", "envqmon"]
+  # - ["mqtt.server", "vd9358ed.ala.asia-southeast1.emqxsl.com:8883"]
+  # - ["mqtt.ssl_enable", true]
+  # - ["mqtt.ssl_ca_cert", "emqxsl-ca.crt"]
 
 tags:
   - js
