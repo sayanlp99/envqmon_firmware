@@ -290,8 +290,8 @@ Log.info('Starting 20-second warm-up for MQ9, MQ135, and PMS5003 sensors...');
 Timer.set(WARMUP_TIME, false, function() {
   Log.info('Warm-up complete. Starting data collection and MQTT publishing.');
 
-  // Timer to send data every 5 seconds
-  Timer.set(5000, Timer.REPEAT, function() {
+  // Timer to send data every 10 seconds
+  Timer.set(10000, Timer.REPEAT, function() {
     let deviceId = Cfg.get('device.id');
     let topic = 'envqmon/' + deviceId;
 
