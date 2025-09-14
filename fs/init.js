@@ -1,4 +1,3 @@
-// Load required Mongoose OS libraries
 load('api_config.js');
 load('api_mqtt.js');
 load('api_timer.js');
@@ -8,6 +7,7 @@ load('api_i2c.js');
 load('api_sys.js');
 load('api_log.js');
 load('api_math.js');
+load('api_uart.js');
 
 // Constants for analog pins and I2C
 let ANALOG_PIN_MQ_CO = 34;      // pin for CO sensor
@@ -20,33 +20,70 @@ let ANALOG_PIN_SOUND = 39;      // pin for sound sensor
 let i2c = I2C.get();
 let BME280_ADDR = 0x76;         // BME280 default I2C address
 
-// Function to read analog sensors (mocking complex logic for simplicity)
+// UART setup for PMS5003
+let UART_NO = 2;                // UART2 (RXD2 on pin 16)
+let PMS5003_BAUD = 9600;        // PMS5003 uses 9600 baud rate
+
+// Configure UART for PMS5003
+UART.setConfig(UART_NO, {
+  baud: PMS5003_BAUD,
+  rxPin: 16,                    // RX pin for PMS5003
+  txPin: -1,                    // TX not used for PMS5003 (passive mode)
+  bufferSize: 256               // Buffer for incoming data
+});
+
+// Function to read analog sensors
 function readAnalogSensor(pin) {
   let value = ADC.read(pin);
-  // Simple linear mapping for demonstration. Calibration is needed.
   return (value / 4095.0) * 100.0;
 }
 
-// Function to simulate PM2.5 and PM10 values
+// Function to read PMS5003 sensor data
 function getPMValues() {
-  // Replace with actual sensor readings if you have a PM sensor
-  return {
-    pm25: 35.75,
-    pm10: 62.35
-  };
+  let pmData = { pm25: 0, pm10: 0 };
+  let buffer = '';
+  let start1 = 0x42, start2 = 0x4d; // PMS5003 frame start bytes
+  let frameLength = 32;             // PMS5003 frame length in bytes
+
+  // Read UART data
+  UART.setRxEnabled(UART_NO, true);
+  let timeout = Sys.uptime() + 5;   // 5-second timeout
+  while (Sys.uptime() < timeout) {
+    let byte = UART.readByte(UART_NO);
+    if (byte >= 0) {
+      buffer += String.fromCharCode(byte);
+      if (buffer.length() >= frameLength) {
+        // Check for valid frame start
+        if (buffer.charCodeAt(0) === start1 && buffer.charCodeAt(1) === start2) {
+          // Verify frame length and checksum
+          let frameLen = (buffer.charCodeAt(2) << 8) + buffer.charCodeAt(3);
+          if (frameLen + 4 <= buffer.length()) {
+            let checksum = 0;
+            for (let i = 0; i < frameLen + 2; i++) {
+              checksum += buffer.charCodeAt(i);
+            }
+            let receivedChecksum = (buffer.charCodeAt(frameLen + 2) << 8) + buffer.charCodeAt(frameLen + 3);
+            if (checksum === receivedChecksum) {
+              // Extract PM2.5 and PM10 (standard particles, CF=1)
+              pmData.pm25 = (buffer.charCodeAt(4) << 8) + buffer.charCodeAt(5);
+              pmData.pm10 = (buffer.charCodeAt(6) << 8) + buffer.charCodeAt(7);
+              break;
+            }
+          }
+          // Clear buffer if frame is invalid
+          buffer = buffer.slice(-frameLength);
+        }
+      }
+    }
+    Sys.usleep(1000); // Small delay to prevent CPU overload
+  }
+  UART.setRxEnabled(UART_NO, false);
+  return pmData;
 }
 
 // Function to read raw data from BME280 via I2C
 function readBME280Data() {
   let temp, pressure, humidity;
-  // This is a simplified example. A full implementation requires reading calibration
-  // data and performing complex calculations, which is what api_bme280.js handles.
-  // For this direct I2C approach, we will use mock data to demonstrate the concept.
-  
-  // In a real scenario, you would perform I2C transactions here to read registers.
-  // Example (conceptual):
-  // i2c.readReg(BME280_ADDR, 0xF7, 8); // Read temperature, pressure, humidity registers
-  
   // Mock data for demonstration purposes
   temp = 23.36 + Math.random() * 2 - 1;
   pressure = 1011.36 + Math.random() * 5 - 2.5;
@@ -76,7 +113,7 @@ function collectSensorData() {
   data.light = readAnalogSensor(ANALOG_PIN_LIGHT);
   data.noise = readAnalogSensor(ANALOG_PIN_SOUND);
 
-  // Get simulated PM values
+  // Get PMS5003 PM values
   let pmData = getPMValues();
   data.pm25 = pmData.pm25;
   data.pm10 = pmData.pm10;
@@ -87,8 +124,8 @@ function collectSensorData() {
   return data;
 }
 
-// Timer to send data every 5 seconds
-Timer.set(5000, Timer.REPEAT, function() {
+// Timer to send data every 10 seconds
+Timer.set(10000, Timer.REPEAT, function() {
   let deviceId = Cfg.get('device.id');
   let topic = 'envqmon/' + deviceId;
 
